@@ -2,7 +2,15 @@ import { Link } from 'react-router-dom'
 import { InlineExperimentTargetOwnerEmail, InlineExperimentTitle } from './InlineExperimentFields'
 import { MetricFullEditRow } from './MetricsTable'
 import { aggregateMetricHealth } from '../lib/metricHealth'
-import { numericProgress, parseLooseNumber, statusBarColor, statusFillFraction, statusSegmentColor } from '../lib/metricVisual'
+import {
+  effectiveTargetUpperBound,
+  formatMetricTargetDisplay,
+  numericProgress,
+  parseLooseNumber,
+  statusBarColor,
+  statusFillFraction,
+  statusSegmentColor,
+} from '../lib/metricVisual'
 
 /** Stacked bar: share of metrics by status */
 export function StatusDistributionChart({ experiments }) {
@@ -200,18 +208,21 @@ export function TargetVsCurrentMatrix({ experiments, canEdit = false, onUpdateMe
             <th className="px-3 py-2 font-semibold">Program target owner (email)</th>
             <th className="px-3 py-2 font-semibold">Metric</th>
             <th className="px-3 py-2 font-semibold">Target owner (email)</th>
-            <th className="px-3 py-2 font-semibold">Target (hypothesis / goal)</th>
+            <th className="px-3 py-2 font-semibold">Target (upper bound)</th>
             <th className="px-3 py-2 font-semibold">Current</th>
             <th className="px-3 py-2 font-semibold">Progress</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(({ exp, metric: m }) => {
-            const targetNum = parseLooseNumber(m.target_value)
+            const targetNum = effectiveTargetUpperBound(m)
             const currentNum = parseLooseNumber(m.current_value)
             const numProg = numericProgress(currentNum, targetNum)
             const fill = numProg != null ? numProg : statusFillFraction(m.status)
-            const track = numProg != null ? 'Numeric estimate from text' : 'Health proxy from status until numbers are logged'
+            const track =
+              numProg != null
+                ? 'Progress from logged current toward the numeric target'
+                : 'Progress follows status until current and target are both numbers'
 
             return (
               <tr key={m.id} className="border-t border-[var(--color-lavender)]">
@@ -223,7 +234,9 @@ export function TargetVsCurrentMatrix({ experiments, canEdit = false, onUpdateMe
                 <td className="max-w-[9rem] break-all px-3 py-2 align-middle text-[color-mix(in_srgb,var(--color-purple)_75%,var(--color-black))]">
                   {m.assignee_email || '—'}
                 </td>
-                <td className="max-w-[14rem] px-3 py-2 align-middle text-[color-mix(in_srgb,var(--color-purple)_80%,transparent)]">{m.target_value || '—'}</td>
+                <td className="max-w-[14rem] px-3 py-2 align-middle font-metric tabular-nums text-[color-mix(in_srgb,var(--color-purple)_80%,transparent)]">
+                  {formatMetricTargetDisplay(m)}
+                </td>
                 <td className="max-w-[10rem] px-3 py-2 align-middle text-[var(--color-black)]">{m.current_value || '—'}</td>
                 <td className="px-3 py-2 align-middle">
                   <svg width={barW} height={22} viewBox={`0 0 ${barW} 22`} className="max-w-full" role="img" aria-label={track}>
@@ -245,7 +258,7 @@ export function TargetVsCurrentMatrix({ experiments, canEdit = false, onUpdateMe
         </tbody>
       </table>
       <p className="border-t border-[var(--color-lavender)] px-3 py-2 font-body text-[11px] leading-snug text-[color-mix(in_srgb,var(--color-purple)_70%,transparent)]">
-        When both target and current look like numbers, the yellow bar shows rough progress. Otherwise the bar reflects status (pending = thin, on track = full).
+        Each metric’s target is <strong className="font-semibold text-[var(--color-black)]">one number</strong> (the agreed upper bound) everywhere in the app. The bar shows rough progress when the logged current and that target are both numeric; otherwise the fill reflects status (pending = thin, on track = full).
       </p>
     </div>
   )

@@ -32,12 +32,11 @@ function CountPill({ label, count }) {
 }
 
 /**
- * @param {{ experiments: unknown[], canEdit?: boolean, onUpdateMetric?: unknown, onUpdateExperiment?: unknown, onOpenTargetsDetail?: (experimentId: string) => void }} props
+ * @param {{ experiments: unknown[], canEdit?: boolean, onUpdateExperiment?: unknown, onOpenTargetsDetail?: (experimentId: string) => void }} props
  */
 export default function SnapshotOverview({
   experiments,
   canEdit = false,
-  onUpdateMetric,
   onUpdateExperiment,
   onOpenTargetsDetail,
 }) {

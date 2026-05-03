@@ -6,14 +6,12 @@ import {
   InlineExperimentTitle,
 } from './InlineExperimentFields'
 import { MetricFullEditRow } from './MetricsTable'
-import { experimentSnapshotSummary, experimentSnapshotSummaryFull } from '../lib/experimentSummary'
+import { experimentSnapshotSummary } from '../lib/experimentSummary'
 import {
   experimentRollupFromMetrics,
-  formatRollupNumber,
+  formatMetricTargetDisplay,
   metricBulletLayout,
-  parseTargetHint,
   signalBorderClass,
-  snapshotHypothesizedTargetNumericBlurb,
   statusBarColor,
 } from '../lib/metricVisual'
 
@@ -92,7 +90,7 @@ function ProgressMeter({ layout, caption }) {
       ) : null}
       <div
         className="relative w-full overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--color-lavender)_32%,white)] ring-1 ring-[color-mix(in_srgb,var(--color-purple)_16%,var(--color-lavender))] h-3"
-        title="Fill = where you are toward the hypothesized target line on the right."
+        title="Fill shows how far you are toward the target on the right."
       >
         <div
           className="absolute inset-y-0 left-0 z-[1] rounded-md"
@@ -115,16 +113,15 @@ function ProgressMeter({ layout, caption }) {
 function MetricTargetNowCard({ metric, canEdit, onUpdateMetric }) {
   const layout = metricBulletLayout(metric)
   const status = metric.status || 'pending'
-  const targetShown = displayValue(metric.target_value)
+  const targetShown = formatMetricTargetDisplay(metric)
   const nowShown = displayValue(metric.current_value)
-  const parsedTargetNum = parseTargetHint(metric.target_value)
 
   if (canEdit && onUpdateMetric) {
     return (
       <li className="rounded-lg border border-[color-mix(in_srgb,var(--color-lavender)_80%,var(--color-purple))] bg-[var(--color-white)] p-3 shadow-sm">
         <MetricFullEditRow metric={metric} onUpdateMetric={onUpdateMetric} />
         <div className="mt-4 border-t border-[color-mix(in_srgb,var(--color-lavender)_55%,transparent)] pt-3">
-          <ProgressMeter layout={layout} caption="Progress towards hypothesized target (bar fills from left; marker on the right)" />
+          <ProgressMeter layout={layout} caption="Progress toward target" />
           <p className="mt-2 m-0 text-right font-metric text-[12px] font-semibold tabular-nums text-[var(--color-purple)]">{layout.rightLabel}</p>
         </div>
       </li>
@@ -145,11 +142,6 @@ function MetricTargetNowCard({ metric, canEdit, onUpdateMetric }) {
             <span className="font-metric text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-purple)]">Target</span>
             <span className="mt-1 font-body text-[13px] font-semibold leading-snug text-[var(--color-black)] break-words">{targetShown}</span>
             <span className="mt-1 font-body text-[10px] text-[color-mix(in_srgb,var(--color-purple)_65%,transparent)]">What we aim for</span>
-            {parsedTargetNum != null && parsedTargetNum > 0 ? (
-              <span className="mt-1.5 block font-metric text-[10px] font-semibold tabular-nums text-[var(--color-purple)]">
-                Parsed number from target text: {formatRollupNumber(parsedTargetNum)}
-              </span>
-            ) : null}
           </div>
           <div className={`flex min-w-0 flex-1 flex-col rounded-md border-2 px-2.5 py-2 ${nowPillFrameClass(status)}`}>
             <span className="font-metric text-[10px] font-bold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--color-black)_78%,transparent)]">
@@ -173,7 +165,7 @@ function MetricTargetNowCard({ metric, canEdit, onUpdateMetric }) {
       </div>
 
       <div className="mt-4 border-t border-[color-mix(in_srgb,var(--color-lavender)_55%,transparent)] pt-3">
-        <ProgressMeter layout={layout} caption="Progress towards hypothesized target (bar fills from left; marker on the right)" />
+        <ProgressMeter layout={layout} caption="Progress toward target" />
         <p className="mt-2 m-0 text-right font-metric text-[12px] font-semibold tabular-nums text-[var(--color-purple)]">{layout.rightLabel}</p>
       </div>
     </li>
@@ -192,18 +184,16 @@ function ExperimentSnapshotBlock({
   const metrics = experiment.metrics ?? []
   const rollup = experimentRollupFromMetrics(metrics)
   const rollupPct = rollup.avgNumericGoalFraction != null ? Math.round(rollup.avgNumericGoalFraction * 100) : 0
-  const numericBlurb = snapshotHypothesizedTargetNumericBlurb(rollup)
   const rollupLayout = {
     fillFraction: rollup.avgNumericGoalFraction ?? 0,
     fillColor: statusBarColor(rollup.worst),
     solidGoal: true,
     rightLabel:
       rollup.avgNumericGoalFraction != null
-        ? `Avg ${rollupPct}% (logged vs hypothesized targets)`
-        : `Avg 0% — log current vs hypothesized targets`,
+        ? `About ${rollupPct}% of the way to targets (averaged across metrics that have both a logged value and a numeric target).`
+        : `Stays at 0% until each metric has a logged current value and a numeric target so we can compare them.`,
   }
   const summary = experimentSnapshotSummary(experiment)
-  const summaryFull = experimentSnapshotSummaryFull(experiment)
 
   return (
     <details
@@ -218,8 +208,8 @@ function ExperimentSnapshotBlock({
         }
       }}
     >
-      <summary className="cursor-pointer list-none px-4 py-3 [&::-webkit-details-marker]:hidden">
-        <span className="flex items-start gap-3">
+      <summary className="cursor-pointer list-none px-4 py-3 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
+        <span className="flex min-w-0 items-start gap-3">
           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--color-lavender)] bg-[var(--color-white)] text-[var(--color-purple)]">
             <svg
               viewBox="0 0 20 20"
@@ -231,12 +221,9 @@ function ExperimentSnapshotBlock({
             </svg>
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-body text-[14px] font-bold uppercase tracking-wide text-[var(--color-black)]">{experiment.title}</span>
+            <span className="block min-w-0 break-words font-body text-[14px] font-bold uppercase tracking-wide text-[var(--color-black)]">{experiment.title}</span>
             {summary ? (
-              <span
-                className="mt-1 block truncate font-body text-[11px] leading-snug text-[color-mix(in_srgb,var(--color-purple)_78%,var(--color-black))]"
-                title={summaryFull || summary}
-              >
+              <span className="mt-1 block whitespace-normal break-words font-body text-[11px] leading-snug text-[color-mix(in_srgb,var(--color-purple)_78%,var(--color-black))]">
                 {summary}
               </span>
             ) : (
@@ -244,19 +231,30 @@ function ExperimentSnapshotBlock({
                 Add a question on the full experiment page for a one-line blurb.
               </span>
             )}
-            <span className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+            <span className="mt-2 flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
               <StatusMiniPills counts={rollup.counts} />
-              <span className="font-metric text-[12px] font-semibold text-[color-mix(in_srgb,var(--color-purple)_88%,transparent)]">
-                {metrics.length} metric{metrics.length === 1 ? '' : 's'} · Towards Hypothesized Targets {rollupPct}% (from logs)
+              <span className="flex min-w-0 flex-wrap items-center gap-1.5 font-metric text-[12px] font-semibold text-[color-mix(in_srgb,var(--color-purple)_88%,transparent)]">
+                <span className="min-w-0 break-words">
+                  {metrics.length} metric{metrics.length === 1 ? '' : 's'} · {rollupPct}% toward targets
+                </span>
+                {metrics.length ? (
+                  <button
+                    type="button"
+                    className="focus-sparken inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-purple)_35%,var(--color-lavender))] text-[11px] font-bold leading-none text-[var(--color-purple)] hover:bg-[color-mix(in_srgb,var(--color-lavender)_30%,white)]"
+                    aria-label={rollupLayout.rightLabel}
+                    title={rollupLayout.rightLabel}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                  >
+                    ?
+                  </button>
+                ) : null}
               </span>
             </span>
-            {numericBlurb ? (
-              <span className="mt-1.5 block font-body text-[10px] font-semibold leading-snug text-[var(--color-black)]" title={numericBlurb}>
-                {numericBlurb}
-              </span>
-            ) : null}
             {experiment.target_owner_email?.trim() ? (
-              <span className="mt-1.5 block truncate font-body text-[10px] text-[color-mix(in_srgb,var(--color-purple)_72%,var(--color-black))]" title="Program target owner (email)">
+              <span className="mt-1.5 block whitespace-normal break-words font-body text-[10px] text-[color-mix(in_srgb,var(--color-purple)_72%,var(--color-black))]">
                 Program target owner: <span className="break-all font-semibold">{experiment.target_owner_email.trim()}</span>
               </span>
             ) : (
@@ -303,17 +301,23 @@ function ExperimentSnapshotBlock({
               <div className="rounded-lg border border-[color-mix(in_srgb,var(--color-purple)_22%,var(--color-lavender))] bg-[color-mix(in_srgb,var(--color-purple)_4%,white)] p-3">
                 <p className="m-0 font-body text-[12px] font-bold text-[var(--color-black)]">Experiment roll-up</p>
                 <p className="mt-1 m-0 font-body text-[11px] text-[color-mix(in_srgb,var(--color-purple)_72%,transparent)]">
-                  Average across metrics where both logged current and hypothesized target text parse as numbers (otherwise 0% here). Bar color still
-                  follows the worst status in this experiment.
+                  Average where each metric has a logged current value and a numeric target; otherwise the bar follows status. Color matches the worst metric in this experiment.
                 </p>
-                {numericBlurb ? (
-                  <p className="mt-2 m-0 font-body text-[11px] font-semibold leading-snug text-[var(--color-black)]">{numericBlurb}</p>
-                ) : null}
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
-                  <div className="min-w-0 flex-1">
-                    <ProgressMeter layout={rollupLayout} caption="Towards Hypothesized Targets (experiment roll-up)" />
+                <div className="mt-3 min-w-0">
+                  <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                    <p className="m-0 font-metric text-[10px] font-semibold uppercase tracking-[0.12em] text-[color-mix(in_srgb,var(--color-purple)_78%,transparent)]">
+                      Experiment average toward targets
+                    </p>
+                    <button
+                      type="button"
+                      className="focus-sparken inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-purple)_35%,var(--color-lavender))] font-metric text-[11px] font-bold leading-none text-[var(--color-purple)] hover:bg-[color-mix(in_srgb,var(--color-lavender)_30%,white)]"
+                      aria-label={rollupLayout.rightLabel}
+                      title={rollupLayout.rightLabel}
+                    >
+                      ?
+                    </button>
                   </div>
-                  <p className="m-0 shrink-0 text-right font-metric text-[12px] font-semibold text-[var(--color-purple)] sm:pb-4">{rollupLayout.rightLabel}</p>
+                  <ProgressMeter layout={rollupLayout} caption={null} />
                 </div>
               </div>
 
@@ -381,14 +385,13 @@ export default function SnapshotGoalChart({
     <div>
       <p className="font-sparken-label mb-1 text-[var(--color-purple)]">Targets &amp; logged values</p>
       <p className="mb-4 max-w-3xl font-body text-[12px] leading-relaxed text-[color-mix(in_srgb,var(--color-purple)_76%,transparent)]">
-        From the <Link to="/" className="font-semibold text-[var(--color-purple)] underline underline-offset-2 hover:text-[var(--color-black)]">Snapshot</Link>, use
-        “Open targets &amp; logged values” on a card to jump here with that row expanded. You can also expand any experiment below. Each row includes{' '}
-        <strong className="font-semibold text-[var(--color-black)]">research referenced</strong> and <strong className="font-semibold text-[var(--color-black)]">hypothesized targets</strong>, then each metric’s{' '}
-        <strong className="text-[var(--color-purple)]">Target</strong> vs <strong className="text-[var(--color-black)]">Now</strong> and a progress bar. When signed in, expand a row to edit inline. For the full program card, open{' '}
+        From the <Link to="/" className="font-semibold text-[var(--color-purple)] underline underline-offset-2 hover:text-[var(--color-black)]">Snapshot</Link>, open{' '}
+        <strong className="font-semibold text-[var(--color-black)]">Targets &amp; logged values</strong> on a card to land here, or expand any experiment below. Each row shows
+        context, then every metric’s <strong className="text-[var(--color-purple)]">Target</strong> vs <strong className="text-[var(--color-black)]">Now</strong> with a simple progress bar. Signed in: edit inline. For the full card, use{' '}
         <Link to="/experiments" className="font-semibold text-[var(--color-purple)] underline underline-offset-2 hover:text-[var(--color-black)]">
           All experiments
         </Link>{' '}
-        or an experiment’s dedicated page from there.
+        or the experiment page.
       </p>
 
       <div className="flex flex-col gap-3">

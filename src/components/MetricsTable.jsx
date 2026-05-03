@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { effectiveTargetUpperBound, formatMetricTargetDisplay } from '../lib/metricVisual'
 
 const BORDER = {
   on_track: 'var(--color-yellow)',
@@ -99,7 +100,10 @@ function MetricTargetOwnerInlineSave({ metric, onUpdateMetric }) {
 
 export function MetricFullEditRow({ metric, onUpdateMetric }) {
   const [label, setLabel] = useState(metric.label ?? '')
-  const [targetValue, setTargetValue] = useState(metric.target_value ?? '')
+  const [targetUpperBound, setTargetUpperBound] = useState(() => {
+    const n = effectiveTargetUpperBound(metric)
+    return n != null && Number.isFinite(n) ? String(n) : ''
+  })
   const [currentValue, setCurrentValue] = useState(metric.current_value ?? '')
   const [warningThreshold, setWarningThreshold] = useState(metric.warning_threshold ?? '')
   const [assigneeEmail, setAssigneeEmail] = useState(metric.assignee_email ?? '')
@@ -109,7 +113,8 @@ export function MetricFullEditRow({ metric, onUpdateMetric }) {
   useEffect(() => {
     queueMicrotask(() => {
       setLabel(metric.label ?? '')
-      setTargetValue(metric.target_value ?? '')
+      const hint = effectiveTargetUpperBound(metric)
+      setTargetUpperBound(hint != null && Number.isFinite(hint) ? String(hint) : '')
       setCurrentValue(metric.current_value ?? '')
       setWarningThreshold(metric.warning_threshold ?? '')
       setAssigneeEmail(metric.assignee_email ?? '')
@@ -121,14 +126,21 @@ export function MetricFullEditRow({ metric, onUpdateMetric }) {
 
   const saveRow = async () => {
     setSaving(true)
-    await onUpdateMetric(metric.id, {
+    const ubRaw = targetUpperBound.trim().replace(/,/g, '')
+    const ubNum = ubRaw === '' ? null : Number(ubRaw)
+    const target_upper_bound =
+      ubNum != null && Number.isFinite(ubNum) && ubNum > 0 ? ubNum : null
+
+    const patch = {
       label: label.trim() || 'Untitled metric',
-      target_value: targetValue.trim() === '' ? null : targetValue.trim(),
+      target_upper_bound,
       current_value: currentValue.trim() === '' ? null : currentValue.trim(),
       warning_threshold: warningThreshold.trim() === '' ? null : warningThreshold.trim(),
       assignee_email: assigneeEmail.trim() === '' ? null : assigneeEmail.trim(),
       status,
-    })
+    }
+    if (target_upper_bound != null) patch.target_value = null
+    await onUpdateMetric(metric.id, patch)
     setSaving(false)
   }
 
@@ -155,12 +167,16 @@ export function MetricFullEditRow({ metric, onUpdateMetric }) {
         value={label}
         onChange={(e) => setLabel(e.target.value)}
       />
-      <label className="font-sparken-label mb-1 block text-[var(--color-purple)]">Target (goal)</label>
-      <textarea
-        className="focus-sparken mb-2 min-h-[2.5rem] w-full resize-y rounded border border-[var(--color-lavender)] p-2 font-body text-[13px] text-[var(--color-black)]"
-        rows={2}
-        value={targetValue}
-        onChange={(e) => setTargetValue(e.target.value)}
+      <label className="font-sparken-label mb-1 block text-[var(--color-purple)]">Target (upper bound, one number)</label>
+      <input
+        type="number"
+        min={0}
+        step="any"
+        inputMode="decimal"
+        placeholder="e.g. 50"
+        className="focus-sparken mb-2 w-full rounded border border-[var(--color-lavender)] p-2 font-body text-[13px] text-[var(--color-black)]"
+        value={targetUpperBound}
+        onChange={(e) => setTargetUpperBound(e.target.value)}
       />
       <label className="font-sparken-label mb-1 block text-[var(--color-purple)]">Current value</label>
       <textarea
@@ -215,7 +231,7 @@ function ReadOnlyMetricDetailCard({ metric }) {
       <dl className="m-0 mt-3 grid grid-cols-1 gap-2 font-body text-[13px] sm:grid-cols-2">
         <div>
           <dt className="font-metric text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-purple)]">Target</dt>
-          <dd className="m-0 mt-0.5 text-[var(--color-black)]">{display(metric.target_value)}</dd>
+          <dd className="m-0 mt-0.5 text-[var(--color-black)]">{formatMetricTargetDisplay(metric)}</dd>
         </div>
         <div>
           <dt className="font-metric text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-purple)]">Current</dt>
@@ -321,9 +337,9 @@ export default function MetricsTable({ metrics, canEdit, onUpdateMetric, fullCol
                   ) : (
                     <span className="font-body text-[18px] font-semibold text-[var(--color-black)]">{m.current_value}</span>
                   )}
-                  {m.target_value ? (
+                  {formatMetricTargetDisplay(m) !== '—' ? (
                     <span className="font-body text-[12px] text-[color-mix(in_srgb,var(--color-purple)_60%,transparent)]">
-                      vs target: {m.target_value}
+                      vs target: {formatMetricTargetDisplay(m)}
                     </span>
                   ) : null}
                   {!canEdit ? (

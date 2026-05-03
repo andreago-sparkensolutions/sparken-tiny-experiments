@@ -45,6 +45,12 @@ npm run build
 npm run preview
 ```
 
+### Deploying on Vercel
+
+1. Import this GitHub repo, framework **Vite**, root **`./`**.
+2. In **Settings → Environment Variables**, add **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_ANON_KEY`** for **Production** (and Preview if you use it). Redeploy after saving — Vite bakes these in at **build** time.
+3. **Blank page after deploy** (dark background, no UI): open DevTools → **Network** → reload. If `/assets/*.js` returns **200 but type document/HTML** instead of JavaScript, a bad SPA rewrite was intercepting assets — this repo intentionally **does not** ship a catch‑all `vercel.json` rewrite for that reason. If the script **404s**, check the deployment output root. If the script loads but the page is blank, check the **Console** for errors (and confirm env vars were present at build time).
+
 ## Supabase project setup
 
 1. Create a new project in the Supabase dashboard.

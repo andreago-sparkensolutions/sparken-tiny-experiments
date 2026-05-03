@@ -1,5 +1,5 @@
 -- Seed: 5 experiments, 20 metrics — all current_value NULL, metric status pending
--- Requires migrations through 006 (target_owner_email on experiments + assignee_email on metrics).
+-- Requires migrations through 007 (target_upper_bound numeric + assignee_email on metrics).
 
 BEGIN;
 
@@ -22,11 +22,11 @@ VALUES (
   'rose@sparken.example'
 );
 
-INSERT INTO public.metrics (id, experiment_id, label, target_value, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
-  ('f1000001-0000-4000-8000-000000000001', 'f0000001-0000-4000-8000-000000000001', 'Calls booked / week', '5 per week', NULL, 'Below 3 per week triggers review', 'pending', 0, 'rose@sparken.example'),
-  ('f1000001-0000-4000-8000-000000000002', 'f0000001-0000-4000-8000-000000000001', 'Clients closed / month', '2 per month', NULL, '0 new clients in any rolling 30-day window', 'pending', 1, 'rose@sparken.example'),
-  ('f1000001-0000-4000-8000-000000000003', 'f0000001-0000-4000-8000-000000000001', 'Close rate', '20% of discovery calls close', NULL, 'Below 10% close rate triggers messaging review', 'pending', 2, 'rose@sparken.example'),
-  ('f1000001-0000-4000-8000-000000000004', 'f0000001-0000-4000-8000-000000000001', 'Pipeline visibility', '100% of active opportunities logged in CRM', NULL, 'Any active opportunity missing from CRM more than 48 hours', 'pending', 3, 'rose@sparken.example');
+INSERT INTO public.metrics (id, experiment_id, label, target_value, target_upper_bound, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
+  ('f1000001-0000-4000-8000-000000000001', 'f0000001-0000-4000-8000-000000000001', 'Calls booked / week', NULL, 5, NULL, 'Below 3 per week triggers review', 'pending', 0, 'rose@sparken.example'),
+  ('f1000001-0000-4000-8000-000000000002', 'f0000001-0000-4000-8000-000000000001', 'Clients closed / month', NULL, 2, NULL, '0 new clients in any rolling 30-day window', 'pending', 1, 'rose@sparken.example'),
+  ('f1000001-0000-4000-8000-000000000003', 'f0000001-0000-4000-8000-000000000001', 'Close rate', NULL, 20, NULL, 'Below 10% close rate triggers messaging review', 'pending', 2, 'rose@sparken.example'),
+  ('f1000001-0000-4000-8000-000000000004', 'f0000001-0000-4000-8000-000000000001', 'Pipeline visibility', NULL, 100, NULL, 'Any active opportunity missing from CRM more than 48 hours', 'pending', 3, 'rose@sparken.example');
 
 INSERT INTO public.experiments (
   id, title, emoji, status, category, observation, question, hypothesis, experiment_description,
@@ -47,11 +47,11 @@ VALUES (
   'rose@sparken.example'
 );
 
-INSERT INTO public.metrics (id, experiment_id, label, target_value, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
-  ('f1000002-0000-4000-8000-000000000001', 'f0000002-0000-4000-8000-000000000002', 'Messages sent / day', '50 per working day', NULL, 'Below 20 messages on a working day', 'pending', 0, 'rose@sparken.example'),
-  ('f1000002-0000-4000-8000-000000000002', 'f0000002-0000-4000-8000-000000000002', 'Reply rate', '20% reply rate', NULL, 'Below 10% reply rate', 'pending', 1, 'rose@sparken.example'),
-  ('f1000002-0000-4000-8000-000000000003', 'f0000002-0000-4000-8000-000000000002', 'Calls booked / week from outbound', '10 per week from outbound', NULL, 'Below 5 calls in a week', 'pending', 2, 'rose@sparken.example'),
-  ('f1000002-0000-4000-8000-000000000004', 'f0000002-0000-4000-8000-000000000002', 'Winning message variant identified', '1 winning variant by day 14', NULL, 'No winning variant by day 21', 'pending', 3, 'rose@sparken.example');
+INSERT INTO public.metrics (id, experiment_id, label, target_value, target_upper_bound, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
+  ('f1000002-0000-4000-8000-000000000001', 'f0000002-0000-4000-8000-000000000002', 'Messages sent / day', NULL, 50, NULL, 'Below 20 messages on a working day', 'pending', 0, 'rose@sparken.example'),
+  ('f1000002-0000-4000-8000-000000000002', 'f0000002-0000-4000-8000-000000000002', 'Reply rate', NULL, 20, NULL, 'Below 10% reply rate', 'pending', 1, 'rose@sparken.example'),
+  ('f1000002-0000-4000-8000-000000000003', 'f0000002-0000-4000-8000-000000000002', 'Calls booked / week from outbound', NULL, 10, NULL, 'Below 5 calls in a week', 'pending', 2, 'rose@sparken.example'),
+  ('f1000002-0000-4000-8000-000000000004', 'f0000002-0000-4000-8000-000000000002', 'Winning message variant identified', NULL, 1, NULL, 'No winning variant by day 21', 'pending', 3, 'rose@sparken.example');
 
 INSERT INTO public.experiments (
   id, title, emoji, status, category, observation, question, hypothesis, experiment_description,
@@ -72,11 +72,11 @@ VALUES (
   'rose@sparken.example'
 );
 
-INSERT INTO public.metrics (id, experiment_id, label, target_value, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
-  ('f1000003-0000-4000-8000-000000000001', 'f0000003-0000-4000-8000-000000000003', 'Follow-up response rate', '30% of proposals receive a written response', NULL, 'Below 15% response rate in a month', 'pending', 0, 'rose@sparken.example'),
-  ('f1000003-0000-4000-8000-000000000002', 'f0000003-0000-4000-8000-000000000003', 'Close rate lift vs. baseline', '40% increase in close rate vs. baseline', NULL, 'Below 20% lift vs. baseline after 10 proposals', 'pending', 1, 'rose@sparken.example'),
-  ('f1000003-0000-4000-8000-000000000003', 'f0000003-0000-4000-8000-000000000003', 'Deals recovered / month', '2 deals recovered per month', NULL, '0 deals recovered in any 45-day window', 'pending', 2, 'rose@sparken.example'),
-  ('f1000003-0000-4000-8000-000000000004', 'f0000003-0000-4000-8000-000000000003', 'Average time to response', '10 calendar days max average to yes or no', NULL, 'Rolling average exceeds 14 days', 'pending', 3, 'rose@sparken.example');
+INSERT INTO public.metrics (id, experiment_id, label, target_value, target_upper_bound, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
+  ('f1000003-0000-4000-8000-000000000001', 'f0000003-0000-4000-8000-000000000003', 'Follow-up response rate', NULL, 30, NULL, 'Below 15% response rate in a month', 'pending', 0, 'rose@sparken.example'),
+  ('f1000003-0000-4000-8000-000000000002', 'f0000003-0000-4000-8000-000000000003', 'Close rate lift vs. baseline', NULL, 40, NULL, 'Below 20% lift vs. baseline after 10 proposals', 'pending', 1, 'rose@sparken.example'),
+  ('f1000003-0000-4000-8000-000000000003', 'f0000003-0000-4000-8000-000000000003', 'Deals recovered / month', NULL, 2, NULL, '0 deals recovered in any 45-day window', 'pending', 2, 'rose@sparken.example'),
+  ('f1000003-0000-4000-8000-000000000004', 'f0000003-0000-4000-8000-000000000003', 'Average time to response', NULL, 10, NULL, 'Rolling average exceeds 14 days', 'pending', 3, 'rose@sparken.example');
 
 INSERT INTO public.experiments (
   id, title, emoji, status, category, observation, question, hypothesis, experiment_description,
@@ -97,11 +97,11 @@ VALUES (
   'andrea@sparken.example'
 );
 
-INSERT INTO public.metrics (id, experiment_id, label, target_value, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
-  ('f1000004-0000-4000-8000-000000000001', 'f0000004-0000-4000-8000-000000000004', 'ICP document completed', 'Approved by day 7', NULL, 'Not approved by day 10', 'pending', 0, 'andrea@sparken.example'),
-  ('f1000004-0000-4000-8000-000000000002', 'f0000004-0000-4000-8000-000000000004', 'Reply rate after ICP update', '30% increase in reply rate vs. baseline', NULL, 'Below 20% lift vs. baseline in a month', 'pending', 1, 'andrea@sparken.example'),
-  ('f1000004-0000-4000-8000-000000000003', 'f0000004-0000-4000-8000-000000000004', 'Close rate after ICP update', '15% increase in close rate vs. baseline', NULL, 'Below 5% lift vs. baseline in a quarter', 'pending', 2, 'andrea@sparken.example'),
-  ('f1000004-0000-4000-8000-000000000004', 'f0000004-0000-4000-8000-000000000004', 'Wrong-fit leads in pipeline', '10% max of pipeline leads outside ICP', NULL, 'More than 25% of pipeline outside ICP', 'pending', 3, 'andrea@sparken.example');
+INSERT INTO public.metrics (id, experiment_id, label, target_value, target_upper_bound, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
+  ('f1000004-0000-4000-8000-000000000001', 'f0000004-0000-4000-8000-000000000004', 'ICP document completed', NULL, 7, NULL, 'Not approved by day 10', 'pending', 0, 'andrea@sparken.example'),
+  ('f1000004-0000-4000-8000-000000000002', 'f0000004-0000-4000-8000-000000000004', 'Reply rate after ICP update', NULL, 30, NULL, 'Below 20% lift vs. baseline in a month', 'pending', 1, 'andrea@sparken.example'),
+  ('f1000004-0000-4000-8000-000000000003', 'f0000004-0000-4000-8000-000000000004', 'Close rate after ICP update', NULL, 15, NULL, 'Below 5% lift vs. baseline in a quarter', 'pending', 2, 'andrea@sparken.example'),
+  ('f1000004-0000-4000-8000-000000000004', 'f0000004-0000-4000-8000-000000000004', 'Wrong-fit leads in pipeline', NULL, 10, NULL, 'More than 25% of pipeline outside ICP', 'pending', 3, 'andrea@sparken.example');
 
 INSERT INTO public.experiments (
   id, title, emoji, status, category, observation, question, hypothesis, experiment_description,
@@ -122,10 +122,10 @@ VALUES (
   'andrea@sparken.example'
 );
 
-INSERT INTO public.metrics (id, experiment_id, label, target_value, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
-  ('f1000005-0000-4000-8000-000000000001', 'f0000005-0000-4000-8000-000000000005', 'Close rate on warm prospects', '35% of warm pitches sign', NULL, 'Below 25% close rate on first 10 pitches', 'pending', 0, 'andrea@sparken.example'),
-  ('f1000005-0000-4000-8000-000000000002', 'f0000005-0000-4000-8000-000000000005', 'Time to close', '7 days median pitch to signed', NULL, 'Median exceeds 14 days', 'pending', 1, 'andrea@sparken.example'),
-  ('f1000005-0000-4000-8000-000000000003', 'f0000005-0000-4000-8000-000000000005', 'Upsell rate to full engagement', '20% upsell to full engagement within 60 days', NULL, '0 upsells after first 5 fulfilled starters', 'pending', 2, 'andrea@sparken.example'),
-  ('f1000005-0000-4000-8000-000000000004', 'f0000005-0000-4000-8000-000000000005', 'Revenue per starter (net of time)', '$3000 within 3 weeks of kickoff', NULL, 'Below $3000 or delivery beyond 3 weeks without written change order', 'pending', 3, 'andrea@sparken.example');
+INSERT INTO public.metrics (id, experiment_id, label, target_value, target_upper_bound, current_value, warning_threshold, status, sort_order, assignee_email) VALUES
+  ('f1000005-0000-4000-8000-000000000001', 'f0000005-0000-4000-8000-000000000005', 'Close rate on warm prospects', NULL, 35, NULL, 'Below 25% close rate on first 10 pitches', 'pending', 0, 'andrea@sparken.example'),
+  ('f1000005-0000-4000-8000-000000000002', 'f0000005-0000-4000-8000-000000000005', 'Time to close', NULL, 7, NULL, 'Median exceeds 14 days', 'pending', 1, 'andrea@sparken.example'),
+  ('f1000005-0000-4000-8000-000000000003', 'f0000005-0000-4000-8000-000000000005', 'Upsell rate to full engagement', NULL, 20, NULL, '0 upsells after first 5 fulfilled starters', 'pending', 2, 'andrea@sparken.example'),
+  ('f1000005-0000-4000-8000-000000000004', 'f0000005-0000-4000-8000-000000000005', 'Revenue per starter (net of time)', NULL, 3000, NULL, 'Below $3000 or delivery beyond 3 weeks without written change order', 'pending', 3, 'andrea@sparken.example');
 
 COMMIT;

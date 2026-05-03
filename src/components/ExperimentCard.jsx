@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { formatRelativeTime } from '../lib/formatRelativeTime'
+import { experimentSnapshotSummary } from '../lib/experimentSummary'
 import { signalBorderClass, statusSegmentColor, worstMetricSignal } from '../lib/metricVisual'
 import MetricsTable from './MetricsTable'
 import StatusBadge from './StatusBadge'
@@ -436,9 +437,9 @@ export default function ExperimentCard({
                 ))}
               </div>
             ) : null}
-            <p className="font-sparken-label m-0 mb-1 text-[var(--color-purple)]">Hypothesis (preview)</p>
-            <p className="m-0 line-clamp-3 font-body text-[13px] leading-relaxed text-[color-mix(in_srgb,var(--color-purple)_88%,var(--color-black))]">
-              {experiment.hypothesis || experiment.observation || '—'}
+            <p className="font-sparken-label m-0 mb-1 text-[var(--color-purple)]">At a glance</p>
+            <p className="m-0 whitespace-normal break-words font-body text-[13px] leading-relaxed text-[color-mix(in_srgb,var(--color-purple)_88%,var(--color-black))]">
+              {experimentSnapshotSummary(experiment) || '—'}
             </p>
             {experiment.target_owner_email?.trim() ? (
               <p className="mt-2 m-0 font-body text-[11px] text-[color-mix(in_srgb,var(--color-purple)_78%,transparent)]">

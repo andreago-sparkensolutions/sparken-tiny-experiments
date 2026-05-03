@@ -9,7 +9,6 @@ export default function DashboardPage() {
     error,
     experiments,
     supabaseConfigured,
-    handleUpdateMetric,
     handleUpdateExperiment,
   } = useOutletContext()
 
@@ -19,7 +18,6 @@ export default function DashboardPage() {
         <SnapshotOverview
           experiments={experiments}
           canEdit={isAuthenticated}
-          onUpdateMetric={handleUpdateMetric}
           onUpdateExperiment={handleUpdateExperiment}
           onOpenTargetsDetail={(id) => navigate(`/targets?open=${encodeURIComponent(id)}`)}
         />

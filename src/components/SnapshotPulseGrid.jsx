@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { InlineExperimentTargetOwnerEmail, InlineExperimentTitle } from './InlineExperimentFields'
-import { experimentSnapshotSummary, experimentSnapshotSummaryFull } from '../lib/experimentSummary'
-import { experimentRollupFromMetrics, snapshotHypothesizedTargetNumericBlurb } from '../lib/metricVisual'
+import { experimentSnapshotSummary } from '../lib/experimentSummary'
+import { experimentRollupFromMetrics } from '../lib/metricVisual'
 
 /** @param {string} worst */
 function riskChrome(worst) {
@@ -48,15 +48,19 @@ function ExperimentPulseCard({ experiment, onOpenTargetsDetail, canEdit, onUpdat
   const hasMetrics = metrics.length > 0
   const pct = rollup.avgNumericGoalFraction != null ? Math.round(rollup.avgNumericGoalFraction * 100) : 0
   const hasNumericProgress = rollup.avgNumericGoalFraction != null
-  const numericBlurb = snapshotHypothesizedTargetNumericBlurb(rollup)
   const summary = experimentSnapshotSummary(experiment)
-  const summaryFull = experimentSnapshotSummaryFull(experiment)
+
+  const pctHelp = !hasMetrics
+    ? 'Add metrics to track progress toward targets.'
+    : hasNumericProgress
+      ? `Average across metrics where you have logged a current number and set a target (${metrics.length} total).`
+      : `Log a current number next to each target to see a % here. You have ${metrics.length} metric${metrics.length === 1 ? '' : 's'}.`
 
   return (
-    <article className={`overflow-hidden rounded-lg border border-[var(--color-lavender)] shadow-sm ${chrome.frame}`}>
-      <div className={`h-1.5 w-full ${chrome.topBar}`} aria-hidden />
-      <div className="px-4 pb-4 pt-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
+    <article className={`min-w-0 rounded-lg border border-[var(--color-lavender)] shadow-sm ${chrome.frame}`}>
+      <div className={`h-1.5 w-full rounded-t-lg ${chrome.topBar}`} aria-hidden />
+      <div className="min-w-0 px-4 pb-4 pt-3">
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
           <h3 className="m-0 min-w-0 flex-1 font-body text-[13px] font-bold uppercase leading-snug tracking-wide text-[var(--color-black)]">
             {canEdit && onUpdateExperiment ? (
               <div className="flex flex-col gap-1.5">
@@ -90,10 +94,7 @@ function ExperimentPulseCard({ experiment, onOpenTargetsDetail, canEdit, onUpdat
         </div>
 
         {summary ? (
-          <p
-            className="mt-2 m-0 truncate font-body text-[12px] leading-snug text-[color-mix(in_srgb,var(--color-purple)_82%,var(--color-black))]"
-            title={summaryFull || summary}
-          >
+          <p className="mt-2 m-0 min-w-0 overflow-visible whitespace-normal break-words font-body text-[12px] leading-snug text-[color-mix(in_srgb,var(--color-purple)_82%,var(--color-black))]">
             {summary}
           </p>
         ) : (
@@ -115,32 +116,24 @@ function ExperimentPulseCard({ experiment, onOpenTargetsDetail, canEdit, onUpdat
 
         <div className="mt-4">
           <p className="m-0 font-metric text-[11px] font-semibold uppercase tracking-[0.14em] text-[color-mix(in_srgb,var(--color-purple)_72%,transparent)]">
-            Towards Hypothesized Targets
+            Close to targets
           </p>
-          <p className="m-0 mt-0.5 font-metric text-[34px] font-bold leading-none tabular-nums tracking-tight text-[var(--color-black)]">
-            {hasMetrics ? `${pct}%` : '—'}
-          </p>
-          <p className="m-0 mt-1 font-body text-[11px] text-[color-mix(in_srgb,var(--color-purple)_68%,transparent)]">
-            {hasMetrics
-              ? hasNumericProgress
-                ? `Average of logged current vs parsed hypothesized target (${metrics.length} metric${metrics.length === 1 ? '' : 's'}, only rows where both parse as numbers).`
-                : `No comparable logged numbers yet · ${metrics.length} metric${metrics.length === 1 ? '' : 's'} · % stays at 0 until current and target text both yield numbers.`
-              : 'No metrics yet'}
-          </p>
-          {numericBlurb ? (
-            <p className="m-0 mt-1.5 font-body text-[11px] font-semibold leading-snug text-[var(--color-black)]" title={numericBlurb}>
-              {numericBlurb}
+          <div className="mt-0.5 flex items-baseline gap-2">
+            <p className="m-0 font-metric text-[34px] font-bold leading-none tabular-nums tracking-tight text-[var(--color-black)]">
+              {hasMetrics ? `${pct}%` : '—'}
             </p>
-          ) : null}
+            <button
+              type="button"
+              className="focus-sparken inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-purple)_35%,var(--color-lavender))] bg-[color-mix(in_srgb,var(--color-lavender)_18%,white)] font-metric text-[12px] font-bold leading-none text-[var(--color-purple)] hover:bg-[color-mix(in_srgb,var(--color-lavender)_35%,white)]"
+              title={pctHelp}
+              aria-label={`How this percentage works: ${pctHelp}`}
+            >
+              ?
+            </button>
+          </div>
           <div
             className="mt-3 h-2.5 w-full max-w-[11rem] overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--color-lavender)_45%,white)] ring-1 ring-[color-mix(in_srgb,var(--color-purple)_12%,transparent)]"
-            title={
-              hasMetrics
-                ? hasNumericProgress
-                  ? `${pct}% — average of current vs hypothesized target where both parse as numbers`
-                  : '0% until logged current values parse against hypothesized targets'
-                : undefined
-            }
+            title={hasMetrics && hasNumericProgress ? `${pct}% average toward numeric targets` : undefined}
             role={hasMetrics ? 'presentation' : undefined}
           >
             <div
@@ -166,9 +159,7 @@ function ExperimentPulseCard({ experiment, onOpenTargetsDetail, canEdit, onUpdat
   )
 }
 
-/**
- * High-level experiment snapshot: % towards hypothesized targets + green / orange / red (or neutral) risk.
- */
+/** High-level snapshot: how close to targets + quick status color per experiment. */
 export default function SnapshotPulseGrid({ experiments, onOpenTargetsDetail, canEdit = false, onUpdateExperiment }) {
   const list = experiments ?? []
 
@@ -184,16 +175,15 @@ export default function SnapshotPulseGrid({ experiments, onOpenTargetsDetail, ca
     <div>
       <p className="font-sparken-label m-0 mb-1 text-[var(--color-purple)]">Snapshot</p>
       <p className="m-0 mb-4 max-w-3xl font-body text-[12px] leading-relaxed text-[color-mix(in_srgb,var(--color-purple)_76%,transparent)]">
-        One card per experiment: <strong className="font-semibold text-[var(--color-black)]">% Towards Hypothesized Targets</strong> is the average of{' '}
-        <strong className="font-semibold text-[var(--color-black)]">logged current vs parsed target text</strong> only where both yield numbers — otherwise{' '}
-        <strong className="font-semibold text-[var(--color-black)]">0%</strong> (status still drives the color badge). When target lines include numbers, the card may list{' '}
-        <strong className="font-semibold text-[var(--color-black)]">parsed numeric anchors</strong> from those targets. <strong className="text-emerald-800">Green</strong> = healthy,{' '}
-        <strong className="text-orange-600">orange</strong> = watch, <strong className="text-[var(--color-danger)]">red</strong> = at risk,{' '}
-        <strong className="text-[var(--color-purple)]">purple</strong> = still collecting data. Use <strong className="font-semibold text-[var(--color-black)]">Targets &amp; logged values</strong> in the nav for per-metric rows, research notes, and edits.
+        One card per experiment: are we <strong className="font-semibold text-[var(--color-black)]">getting close to our targets</strong> or not? The big % is a simple average
+        where you have logged a current number and set a target; otherwise it stays at <strong className="font-semibold text-[var(--color-black)]">0%</strong>. The color is a quick read
+        from metric status — <strong className="text-emerald-800">green</strong> on track, <strong className="text-orange-600">orange</strong> watch,{' '}
+        <strong className="text-[var(--color-danger)]">red</strong> at risk, <strong className="text-[var(--color-purple)]">purple</strong> still collecting data. Open{' '}
+        <strong className="font-semibold text-[var(--color-black)]">Targets &amp; logged values</strong> for each metric, notes, and edits.
         {canEdit ? (
           <>
             {' '}
-            When signed in, experiment <strong className="font-semibold text-[var(--color-black)]">titles</strong> are editable on each card (save on blur).
+            Signed in: <strong className="font-semibold text-[var(--color-black)]">titles</strong> edit on the card (save on blur).
           </>
         ) : null}
       </p>

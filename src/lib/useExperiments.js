@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { NEW_EXPERIMENT_HYPOTHESIZED_TARGET_NOTE, NEW_EXPERIMENT_RESEARCH_BASIS } from './defaultNewExperimentCopy'
 import { normalizeAssigneeEmail, notifyMetricAssigneeIfConfigured } from './notifyMetricAssignee'
+import { parseOptionalPositiveTargetUpperBound } from './metricVisual'
 import { supabase, supabaseConfigured } from './supabase'
 
 function findMetricContext(experiments, metricId) {
@@ -154,15 +155,17 @@ export function useExperiments() {
         if (row._delete) continue
 
         const assigneeRaw = row.assignee_email?.trim() ? String(row.assignee_email).trim() : null
+        const targetUpper = parseOptionalPositiveTargetUpperBound(row.target_upper_bound)
         const payload = {
           label: row.label ?? '',
-          target_value: row.target_value || null,
+          target_upper_bound: targetUpper,
           current_value: row.current_value || null,
           warning_threshold: row.warning_threshold || null,
           status: row.status ?? 'pending',
           sort_order: row.sort_order ?? 0,
           assignee_email: assigneeRaw,
         }
+        if (targetUpper != null) payload.target_value = null
 
         if (row.id) {
           const prevNorm = normalizeAssigneeEmail(prevByMetricId.get(row.id))

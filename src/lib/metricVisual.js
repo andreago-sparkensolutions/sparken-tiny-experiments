@@ -76,6 +76,42 @@ export function parseTargetHint(text) {
 }
 
 /**
+ * Parse a positive target upper bound from form input (number or numeric string).
+ * @param {string | number | null | undefined} raw
+ * @returns {number | null}
+ */
+export function parseOptionalPositiveTargetUpperBound(raw) {
+  if (raw === '' || raw == null) return null
+  const n = Number(typeof raw === 'string' ? String(raw).trim().replace(/,/g, '') : raw)
+  if (!Number.isFinite(n) || n <= 0) return null
+  return n
+}
+
+/**
+ * Canonical target number: DB column first, else legacy text parse.
+ * @param {{ target_upper_bound?: number | null, target_value?: string | null } | null | undefined} m
+ * @returns {number | null}
+ */
+export function effectiveTargetUpperBound(m) {
+  if (!m) return null
+  const u = m.target_upper_bound
+  if (u != null && Number.isFinite(Number(u)) && Number(u) > 0) return Number(u)
+  return parseTargetHint(m.target_value)
+}
+
+/**
+ * Single-line target for tables and cards (same number everywhere when set in DB).
+ * @param {{ target_upper_bound?: number | null, target_value?: string | null } | null | undefined} m
+ */
+export function formatMetricTargetDisplay(m) {
+  const n = effectiveTargetUpperBound(m)
+  if (n == null || !Number.isFinite(n)) return '—'
+  const rounded = Math.round(n * 1000) / 1000
+  if (Number.isInteger(rounded)) return String(rounded)
+  return String(rounded)
+}
+
+/**
  * When both values parse, return 0–1 progress of current toward a soft "target" cap.
  * @param {number | null} current
  * @param {number | null} targetHint
@@ -103,11 +139,11 @@ export function normalizedGoalPositions(currentNum, targetNum) {
 
 /**
  * Layout for one horizontal bullet row: fill width vs end-of-track goal marker.
- * @param {{ target_value?: string | null, current_value?: string | null, status?: string }} m
+ * @param {{ target_upper_bound?: number | null, target_value?: string | null, current_value?: string | null, status?: string }} m
  */
 export function metricBulletLayout(m) {
   const status = m.status || 'pending'
-  const targetNum = parseTargetHint(m.target_value)
+  const targetNum = effectiveTargetUpperBound(m)
   const currentNum = parseLooseNumber(m.current_value)
   const targetParses = targetNum != null && targetNum > 0
   const currentParses = currentNum != null
@@ -122,7 +158,7 @@ export function metricBulletLayout(m) {
   const fillColor = statusBarColor(status)
   let rightLabel
   if (targetParses && currentParses) {
-    rightLabel = `${Math.round(fillFraction * 100)}% of hypothesized target`
+    rightLabel = `${Math.round(fillFraction * 100)}% of target`
   } else if (targetParses && !currentParses) {
     rightLabel = 'Log current'
   } else {
@@ -132,7 +168,7 @@ export function metricBulletLayout(m) {
   return {
     fillFraction,
     fillColor,
-    /** Solid goal line at end when we have a numeric target anchor; dashed for qualitative targets. */
+    /** Solid goal line at end when we have a numeric target; dashed for qualitative targets. */
     solidGoal: targetParses,
     rightLabel,
     targetParses,
@@ -144,49 +180,12 @@ export function metricBulletLayout(m) {
  * Experiment-level roll-up: mean bullet fill + worst signal + status counts.
  * @param {{ status?: string }[] | undefined} metrics
  */
-/**
- * @param {number} n
- * @returns {string}
- */
-export function formatRollupNumber(n) {
-  if (n == null || Number.isNaN(n)) return '—'
-  const abs = Math.abs(n)
-  if (abs >= 1000 && abs < 1e9) return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
-  if (Number.isInteger(n) || Math.abs(n - Math.round(n)) < 1e-6) return String(Math.round(n))
-  return n.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 0 })
-}
-
-/**
- * Short line for snapshot cards when we can surface parsed numbers from target / current text.
- * @param {object} rollup — result of {@link experimentRollupFromMetrics}
- * @returns {string | null}
- */
-export function snapshotHypothesizedTargetNumericBlurb(rollup) {
-  if (!rollup) return null
-  const { numericPairCount, avgPairedCurrent, avgPairedTarget, parsedNumericTargets } = rollup
-  if (numericPairCount > 0 && avgPairedCurrent != null && avgPairedTarget != null) {
-    return `Avg parsed current ${formatRollupNumber(avgPairedCurrent)} vs hypothesized target ${formatRollupNumber(
-      avgPairedTarget
-    )} (${numericPairCount} metric${numericPairCount === 1 ? '' : 's'})`
-  }
-  const targets = parsedNumericTargets ?? []
-  if (!targets.length) return null
-  const maxShow = 5
-  const slice = targets.slice(0, maxShow)
-  const suffix = targets.length > maxShow ? ' · …' : ''
-  return `Parsed numeric anchors from target text: ${slice.map(formatRollupNumber).join(' · ')}${suffix}`
-}
-
 export function experimentRollupFromMetrics(metrics) {
   const arr = metrics ?? []
   if (!arr.length) {
     return {
       avgFill: 0,
       avgNumericGoalFraction: null,
-      avgPairedCurrent: null,
-      avgPairedTarget: null,
-      numericPairCount: 0,
-      parsedNumericTargets: /** @type {number[]} */ ([]),
       worst: 'pending',
       counts: { on_track: 0, warning: 0, off_track: 0, pending: 0 },
     }
@@ -195,29 +194,16 @@ export function experimentRollupFromMetrics(metrics) {
   const avgFill = layouts.reduce((s, l) => s + l.fillFraction, 0) / layouts.length
 
   const numericSamples = []
-  const pairedCurrents = []
-  const pairedTargets = []
-  const parsedNumericTargets = []
   for (const m of arr) {
-    const tn = parseTargetHint(m.target_value)
+    const tn = effectiveTargetUpperBound(m)
     const cn = parseLooseNumber(m.current_value)
-    if (tn != null && tn > 0) {
-      parsedNumericTargets.push(tn)
-    }
     if (tn != null && tn > 0 && cn != null) {
       numericSamples.push(Math.min(1, cn / tn))
-      pairedCurrents.push(cn)
-      pairedTargets.push(tn)
     }
   }
   const avgNumericGoalFraction = numericSamples.length
     ? numericSamples.reduce((a, b) => a + b, 0) / numericSamples.length
     : null
-  const numericPairCount = pairedCurrents.length
-  const avgPairedCurrent =
-    numericPairCount > 0 ? pairedCurrents.reduce((a, b) => a + b, 0) / numericPairCount : null
-  const avgPairedTarget =
-    numericPairCount > 0 ? pairedTargets.reduce((a, b) => a + b, 0) / numericPairCount : null
 
   const worst = worstMetricSignal(arr)
   const counts = { on_track: 0, warning: 0, off_track: 0, pending: 0 }
@@ -231,10 +217,6 @@ export function experimentRollupFromMetrics(metrics) {
   return {
     avgFill,
     avgNumericGoalFraction,
-    avgPairedCurrent,
-    avgPairedTarget,
-    numericPairCount,
-    parsedNumericTargets,
     worst,
     counts,
   }

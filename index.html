@@ -14,7 +14,23 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <p
+        id="app-boot-fallback"
+        style="
+          margin: 0;
+          padding: 1.5rem;
+          font-family: 'DM Sans', system-ui, sans-serif;
+          background: #1a1528;
+          color: #d0c6e1;
+          font-size: 14px;
+          line-height: 1.5;
+        "
+      >
+        Loading Sparken… If this text never disappears, open DevTools → Console and Network: the
+        <code style="color: #f8d830">/assets/*.js</code> script must load (not HTML) and there must be no red errors.
+      </p>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

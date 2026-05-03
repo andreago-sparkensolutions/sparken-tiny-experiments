@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { effectiveTargetUpperBound } from '../lib/metricVisual'
 
 function emptyMetricRow(sortOrder) {
   return {
     id: undefined,
     label: '',
-    target_value: '',
+    target_upper_bound: '',
     current_value: '',
     warning_threshold: '',
     assignee_email: '',
@@ -46,7 +47,10 @@ export default function EditPanel({ open, experiment, onClose, onSave }) {
     const rows = (exp.metrics ?? []).map((m, i) => ({
       id: m.id,
       label: m.label ?? '',
-      target_value: m.target_value ?? '',
+      target_upper_bound: (() => {
+        const n = effectiveTargetUpperBound(m)
+        return n != null && Number.isFinite(n) ? n : ''
+      })(),
       current_value: m.current_value ?? '',
       warning_threshold: m.warning_threshold ?? '',
       assignee_email: m.assignee_email ?? '',
@@ -288,12 +292,22 @@ export default function EditPanel({ open, experiment, onClose, onSave }) {
                     value={row.label}
                     onChange={(e) => updateMetricRow(index, { label: e.target.value })}
                   />
-                  <label className="mb-1 block font-body text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-purple)]">Target</label>
-                  <textarea
-                    className="focus-sparken mb-2 min-h-[3rem] w-full resize-y rounded border border-[var(--color-lavender)] p-2 font-body text-[14px] text-[var(--color-black)]"
-                    rows={2}
-                    value={row.target_value}
-                    onChange={(e) => updateMetricRow(index, { target_value: e.target.value })}
+                  <label className="mb-1 block font-body text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-purple)]">
+                    Target (upper bound, one number)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="any"
+                    inputMode="decimal"
+                    placeholder="e.g. 50"
+                    className="focus-sparken mb-2 w-full rounded border border-[var(--color-lavender)] p-2 font-body text-[14px] text-[var(--color-black)]"
+                    value={
+                      row.target_upper_bound === '' || row.target_upper_bound == null || row.target_upper_bound === undefined
+                        ? ''
+                        : String(row.target_upper_bound)
+                    }
+                    onChange={(e) => updateMetricRow(index, { target_upper_bound: e.target.value })}
                   />
                   <label className="mb-1 block font-body text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-purple)]">Current value</label>
                   <textarea
