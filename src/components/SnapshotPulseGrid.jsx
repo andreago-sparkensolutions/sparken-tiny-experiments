@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import HelpTip from './HelpTip'
 import { InlineExperimentTargetOwnerEmail, InlineExperimentTitle } from './InlineExperimentFields'
 import { experimentSnapshotSummary } from '../lib/experimentSummary'
 import { experimentRollupFromMetrics } from '../lib/metricVisual'
@@ -122,14 +123,7 @@ function ExperimentPulseCard({ experiment, onOpenTargetsDetail, canEdit, onUpdat
             <p className="m-0 font-metric text-[34px] font-bold leading-none tabular-nums tracking-tight text-[var(--color-black)]">
               {hasMetrics ? `${pct}%` : '—'}
             </p>
-            <button
-              type="button"
-              className="focus-sparken inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-purple)_35%,var(--color-lavender))] bg-[color-mix(in_srgb,var(--color-lavender)_18%,white)] font-metric text-[12px] font-bold leading-none text-[var(--color-purple)] hover:bg-[color-mix(in_srgb,var(--color-lavender)_35%,white)]"
-              title={pctHelp}
-              aria-label={`How this percentage works: ${pctHelp}`}
-            >
-              ?
-            </button>
+            <HelpTip text={pctHelp} />
           </div>
           <div
             className="mt-3 h-2.5 w-full max-w-[11rem] overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--color-lavender)_45%,white)] ring-1 ring-[color-mix(in_srgb,var(--color-purple)_12%,transparent)]"

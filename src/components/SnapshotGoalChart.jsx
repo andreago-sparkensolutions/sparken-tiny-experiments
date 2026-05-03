@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import HelpTip from './HelpTip'
 import {
   ExperimentHypothesisGoalsForm,
   ExperimentResearchAndTargetsBlock,
@@ -237,20 +238,7 @@ function ExperimentSnapshotBlock({
                 <span className="min-w-0 break-words">
                   {metrics.length} metric{metrics.length === 1 ? '' : 's'} · {rollupPct}% toward targets
                 </span>
-                {metrics.length ? (
-                  <button
-                    type="button"
-                    className="focus-sparken inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-purple)_35%,var(--color-lavender))] text-[11px] font-bold leading-none text-[var(--color-purple)] hover:bg-[color-mix(in_srgb,var(--color-lavender)_30%,white)]"
-                    aria-label={rollupLayout.rightLabel}
-                    title={rollupLayout.rightLabel}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                    }}
-                  >
-                    ?
-                  </button>
-                ) : null}
+                {metrics.length ? <HelpTip text={rollupLayout.rightLabel} size="sm" /> : null}
               </span>
             </span>
             {experiment.target_owner_email?.trim() ? (
@@ -308,14 +296,7 @@ function ExperimentSnapshotBlock({
                     <p className="m-0 font-metric text-[10px] font-semibold uppercase tracking-[0.12em] text-[color-mix(in_srgb,var(--color-purple)_78%,transparent)]">
                       Experiment average toward targets
                     </p>
-                    <button
-                      type="button"
-                      className="focus-sparken inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-purple)_35%,var(--color-lavender))] font-metric text-[11px] font-bold leading-none text-[var(--color-purple)] hover:bg-[color-mix(in_srgb,var(--color-lavender)_30%,white)]"
-                      aria-label={rollupLayout.rightLabel}
-                      title={rollupLayout.rightLabel}
-                    >
-                      ?
-                    </button>
+                    <HelpTip text={rollupLayout.rightLabel} size="sm" />
                   </div>
                   <ProgressMeter layout={rollupLayout} caption={null} />
                 </div>

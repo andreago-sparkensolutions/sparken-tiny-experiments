@@ -1,3 +1,4 @@
+import PortfolioTargetCurrentChart from './PortfolioTargetCurrentChart'
 import ProgramWindowCaption from './ProgramWindowCaption'
 import SnapshotPulseGrid from './SnapshotPulseGrid'
 import { ExperimentMetricHeatstrip, StatusDistributionChart } from './SnapshotVisuals'
@@ -75,6 +76,9 @@ export default function SnapshotOverview({
 
       <div className="mt-8 border-t border-[var(--color-lavender)] pt-8">
         <StatusDistributionChart experiments={experiments} />
+        <div className="mt-8">
+          <PortfolioTargetCurrentChart experiments={experiments} />
+        </div>
         <div className="mt-8">
           <ProgramWindowCaption className="mb-6" />
           <SnapshotPulseGrid
