@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+/*
+  Optional: add H0THOUSE BOLD WOFF2 files under public/fonts/ and uncomment:
+  @font-face {
+    font-family: 'H0THOUSE BOLD';
+    src: url('/fonts/H0THOUSE-BOLD.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+*/
+
+:root {
+  --color-purple: #5e5592;
+  --color-yellow: #f8d830;
+  --color-lime: #d7df5e;
+  --color-lavender: #d0c6e1;
+  /* Brand spec near-black; canvas is a purple-tinted shell (still Sparken, not generic grey) */
+  --color-black: #030403;
+  --color-canvas: color-mix(in srgb, var(--color-purple) 13%, var(--color-black));
+  --color-white: #ffffff;
+  --color-danger: #e53935;
+  --font-headline: "H0THOUSE BOLD", "Black Han Sans", "Arial Black", sans-serif;
+  /* Aileron is brand; web stack uses DM Sans + Outfit for Sparken-adjacent geometry */
+  --font-body: "Aileron", "DM Sans", "Outfit", system-ui, sans-serif;
+}
+
+@theme {
+  --color-sparken-purple: var(--color-purple);
+  --color-sparken-yellow: var(--color-yellow);
+  --color-sparken-lime: var(--color-lime);
+  --color-sparken-lavender: var(--color-lavender);
+  --color-sparken-black: var(--color-black);
+  --color-sparken-white: var(--color-white);
+  --color-sparken-danger: var(--color-danger);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ops / PM dashboard shell: purple-tinted canvas + spec near-black + subtle engineering grid */
+.sparken-canvas {
+  background-color: var(--color-canvas);
+  background-image:
+    radial-gradient(ellipse 115% 65% at 50% -28%, color-mix(in srgb, var(--color-purple) 38%, transparent), transparent 52%),
+    radial-gradient(ellipse 75% 55% at 100% 0%, color-mix(in srgb, var(--color-purple) 18%, transparent), transparent 42%),
+    radial-gradient(ellipse 65% 50% at 0% 100%, color-mix(in srgb, var(--color-purple) 14%, transparent), transparent 45%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 11px,
+      color-mix(in srgb, var(--color-lavender) 5.5%, transparent) 11px,
+      color-mix(in srgb, var(--color-lavender) 5.5%, transparent) 12px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 11px,
+      color-mix(in srgb, var(--color-purple) 4%, transparent) 11px,
+      color-mix(in srgb, var(--color-purple) 4%, transparent) 12px
+    );
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-canvas);
+  color: var(--color-white);
+  font-family: "DM Sans", "Outfit", var(--font-body);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.font-headline {
+  font-family: var(--font-headline);
+  letter-spacing: 0.02em;
+}
+
+.font-body {
+  font-family: "DM Sans", "Outfit", system-ui, sans-serif;
+}
+
+/* Section labels: spec — 11px caps, wide tracking, purple */
+.font-sparken-label {
+  font-family: "DM Sans", "Outfit", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* KPIs, counts, timestamps — engineering / PM dashboard numerics */
+.font-metric {
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0.04em;
+}
+
+.card-surface {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-lavender);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--color-purple) 12%, transparent),
+    0 2px 12px rgba(94, 85, 146, 0.08);
+}
+
+.focus-sparken:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-black), 0 0 0 4px var(--color-yellow);
+}
+
+.focus-sparken:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-black), 0 0 0 4px var(--color-yellow);
+}
